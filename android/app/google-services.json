@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "386398056797",
+    "project_id": "ajkyapakaein",
+    "storage_bucket": "ajkyapakaein.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386398056797:android:ab520a4ffe34b15b38f8b4",
+        "android_client_info": {
+          "package_name": "com.example.aj_kyapakaein"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5j0SUd3KtooQQAl3W1YrsMk_xSVGw8Ow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
