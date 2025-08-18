@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'home.dart';
+
 class AuthGate extends StatefulWidget {
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -7,6 +9,7 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   bool showPassword = false;
+  bool rememberMe = false;
   bool isLogin = true; // Toggle state
 
   @override
@@ -240,13 +243,23 @@ class _AuthGateState extends State<AuthGate> {
                             ),
                             const SizedBox(height: 8),
 
+
                             Row(
                               children: [
-                                Checkbox(value: false, onChanged: (_) {}),
+                                Checkbox(
+                                  value: rememberMe,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      rememberMe = value ?? false;
+                                    });
+                                  },
+                                ),
                                 const Text("Remember me"),
                                 const Spacer(),
                                 TextButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    // Forgot password action
+                                  },
                                   child: const Text(
                                     "Forgot password?",
                                     style: TextStyle(color: Colors.red),
@@ -254,6 +267,7 @@ class _AuthGateState extends State<AuthGate> {
                                 )
                               ],
                             ),
+
                             const SizedBox(height: 12),
 
                             Container(
@@ -265,7 +279,13 @@ class _AuthGateState extends State<AuthGate> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => HomeScreen()),
+                                  );
+
+                                },
                                 child: const Text(
                                   "Login →",
                                   style: TextStyle(
@@ -318,6 +338,20 @@ class _AuthGateState extends State<AuthGate> {
                               ),
                             ),
                             const SizedBox(height: 12),
+                            TextField(
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.key, color: Colors.red),
+                                hintText: "Password",
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
 
                             Container(
                               width: double.infinity,
@@ -328,7 +362,11 @@ class _AuthGateState extends State<AuthGate> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  setState(() => isLogin = true
+                                  );
+
+                                },
                                 child: const Text(
                                   "Continue →",
                                   style: TextStyle(
@@ -346,7 +384,7 @@ class _AuthGateState extends State<AuthGate> {
                                 "Already cooking with us? Login Instead",
                                 style: TextStyle(
                                   color: Colors.red,
-                                  decoration: TextDecoration.underline,
+                                  //decoration: TextDecoration.underline,
                                 ),
                               ),
                             )

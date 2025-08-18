@@ -6,7 +6,11 @@ import 'package:firebase_core/firebase_core.dart';
 // Screens
 import 'screens/auth_gate.dart';
 import 'screens/home.dart';
-import 'screens/questions.dart';
+import 'screens/questions1.dart';
+import 'screens/question2.dart';
+import 'screens/questions3.dart';
+import 'screens/questions4.dart';
+import 'screens/questions5.dart';
 import 'screens/suggestion.dart';
 import 'screens/history.dart';
 import 'screens/setting.dart';
@@ -34,7 +38,11 @@ class MyApp extends StatelessWidget {
       routes: {
         '/auth': (context) => AuthGate(),
         '/home': (context) => HomeScreen(),
-        '/questions': (context) => QuestionsScreen(),
+        '/questions1': (context) => QuestionsScreen(),
+        '/questions2': (context) => Questions2Screen(),
+        '/questions3': (context) => Questions3Screen(),
+        '/questions4': (context) => Questions4Screen(),
+        '/questions5': (context) => Questions5Screen(),
         '/suggestion': (context) => SuggestionScreen(),
         '/history': (context) => HistoryScreen(),
         '/settings': (context) => SettingsScreen(),
