@@ -204,7 +204,25 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
 
   void _saveToHistory(Recipe recipe) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Saved to History!')),
+      SnackBar(
+        content: Row(
+          children: const [
+            Icon(Icons.history, color: Colors.white),
+            SizedBox(width: 10),
+            Text(
+              'Saved to History!',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -217,7 +235,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black54),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushNamed(context, '/home'),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
