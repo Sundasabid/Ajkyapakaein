@@ -546,14 +546,13 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         "About Our App",
                         "Welcome to our amazing application!\n\n"
-                            "🚀 Version: 1.0.0\n"
-                            "📱 Platform: Flutter\n"
-                            "👥 Team: Passionate Developers\n\n"
+                            "Version: 1.0.0\n"
+                            "Platform: Flutter\n"
+                            "Team: Passionate Developers\n\n"
                             "Our mission is to provide you with the best user experience possible. We're constantly working to improve our app and add new features.\n\n"
                             "Thank you for using our app! Your feedback helps us grow and serve you better.\n\n"
                             "Contact us:\n"
-                            "📧 support@ourapp.com\n"
-                            "🌐 www.ourapp.com",
+                            "sundasabid2614@gmail.com\n",
                         icon: Icons.info_outline,
                         iconColor: const Color(0xFF3B82F6),
                       ),
@@ -652,10 +651,10 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         "Help & Support",
                         "Need assistance? We're here to help!\n\n"
-                            "📞 24/7 Support Available\n"
-                            "📧 Email: support@ourapp.com\n"
-                            "💬 Live Chat: Available in app\n"
-                            "📚 FAQ: Check our help section\n\n"
+                            "24/7 Support Available\n"
+                            "Email: support@ourapp.com\n"
+                            "Live Chat: Available in app\n"
+                            "FAQ: Check our help section\n\n"
                             "Common Issues:\n"
                             "• Login problems\n"
                             "• Account settings\n"
@@ -706,18 +705,18 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         "Privacy Policy",
                         "Your Privacy Matters\n\n"
-                            "🔒 Data Protection\n"
+                            "Data Protection\n"
                             "We take your privacy seriously and implement industry-standard security measures to protect your personal information.\n\n"
-                            "📊 Data Collection\n"
+                            "Data Collection\n"
                             "• Account information (name, email)\n"
                             "• Usage analytics (anonymous)\n"
                             "• Device information (for optimization)\n\n"
-                            "🤝 Data Sharing\n"
+                            "Data Sharing\n"
                             "We never sell your personal data to third parties. Your information is only shared when:\n"
                             "• Required by law\n"
                             "• With your explicit consent\n"
                             "• For essential app functionality\n\n"
-                            "🗑️ Data Control\n"
+                            "Data Control\n"
                             "You have full control over your data:\n"
                             "• Request data export\n"
                             "• Delete your account anytime\n"

@@ -217,14 +217,14 @@ class HomeScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                Icons.settings,
+                                Icons.manage_accounts,
                                 color: Colors.white,
                                 size: 28,
                               ),
                             ),
                             const SizedBox(width: 12),
                             const Text(
-                              "Settings",
+                              "Profile",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
