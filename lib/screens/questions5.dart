@@ -185,7 +185,7 @@ class _Questions5ScreenState extends State<Questions5Screen> {
                     onPressed: selectedOption == null
                         ? null
                         : () {
-                      Navigator.pushNamed(context, '/suggestion');
+                      Navigator.pushNamed(context, '/suggestions');
                     },
                     child: const Text(
                       "Continue",
