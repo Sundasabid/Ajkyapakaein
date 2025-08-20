@@ -2,8 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 
-// Screens
+
+import 'model/settings_model.dart';
+import 'model/user_profile.dart';
+
+// screens
 import 'screens/auth_gate.dart';
 import 'screens/home.dart';
 import 'screens/questions1.dart';
@@ -16,25 +21,41 @@ import 'screens/history.dart';
 import 'screens/setting.dart';
 import 'screens/profile.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProfile()),
+        ChangeNotifierProvider(create: (_) => SettingsModel()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsModel>();
+
     return MaterialApp(
       title: 'Meal Suggestion App',
       theme: ThemeData(
         primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: const Color(0xFFFFF5E1),
         fontFamily: 'Serif',
       ),
+
+      themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: GetStartedScreen(),
+      home: const GetStartedScreen(),
       routes: {
         '/auth': (context) => AuthGate(),
         '/home': (context) => HomeScreen(),
@@ -51,7 +72,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 // ---------------- SPLASH SCREEN ----------------
 class GetStartedScreen extends StatelessWidget {
   const GetStartedScreen({super.key});

@@ -192,7 +192,7 @@ class HomeScreen extends StatelessWidget {
                     SizedBox(height: 20,),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/settings');
+                        Navigator.pushNamed(context, '/profile');
                       },
                       child: Container(
                         padding: const EdgeInsets.all(20),
