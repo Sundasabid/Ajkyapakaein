@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../model/user_profile.dart';
-import 'model/user_profile.dart';
-
 import 'dart:io';
 
 
@@ -12,14 +10,30 @@ class ProfileScreen extends StatefulWidget {
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMixin {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -39,47 +53,203 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/background.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
+        image: DecorationImage(
+        image: AssetImage("assets/background.jpg"),
+    fit: BoxFit.cover,
+    ),),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              Expanded(
-                child: _buildProfileContent(user),
-              ),
-            ],
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              children: [
+                _buildModernHeader(context),
+                Expanded(
+                  child: _buildModernProfileContent(user),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(16.0),
+  Widget _buildModernHeader(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFE74C3C),
+            Color(0xFFC0392B),
+          ],
+        ),
+      ),
       child: Row(
         children: [
           Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+              icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          SizedBox(width: 16),
+          Expanded(
+            child: Center(
+              child: Text(
+                'My Profile',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 48), // Balance the back button
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernProfileContent(UserProfile user) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          SizedBox(height: 20),
+          _buildModernProfileImage(user),
+          SizedBox(height: 24),
+          _buildModernUserInfo(user),
+          SizedBox(height: 32),
+          _buildModernEditButton(),
+          SizedBox(height: 32),
+          _buildModernStatsCard(user),
+          SizedBox(height: 24),
+          _buildModernSettingsCard(),
+          SizedBox(height: 24),
+          _buildAppVersion(),
+          SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernProfileImage(UserProfile user) {
+    return Stack(
+      children: [
+        Container(
+          width: 140,
+          height: 140,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFE74C3C).withOpacity(0.1),
+                Color(0xFFC0392B).withOpacity(0.1),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFFE74C3C).withOpacity(0.2),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Container(
+            margin: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 4),
+            ),
+            child: CircleAvatar(
+              radius: 62,
+              backgroundImage: user.profileImagePath != null
+                  ? FileImage(File(user.profileImagePath!))
+                  : AssetImage('assets/profile_image.jpg') as ImageProvider,
+              backgroundColor: Colors.grey[100],
+              child: user.profileImagePath == null
+                  ? Icon(Icons.person, size: 60, color: Colors.grey[400])
+                  : null,
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE74C3C), Color(0xFFC0392B)],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFE74C3C).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernUserInfo(UserProfile user) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
           Text(
-            'Profile',
+            user.name,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
               color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 8),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Color(0xFFE74C3C).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              user.email,
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFFE74C3C),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -87,210 +257,130 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileContent(UserProfile user) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
+  Widget _buildModernEditButton() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 24),
+      child: ElevatedButton(
+        onPressed: _showEditProfileDialog,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFFE74C3C),
+          elevation: 0,
+          padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Color(0xFFE74C3C).withOpacity(0.3)),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildProfileImage(user),
-            SizedBox(height: 24),
-            _buildUserInfo(user),
-            SizedBox(height: 32),
-            _buildEditButton(),
-            SizedBox(height: 40),
-            _buildStatsCard(user),
-            SizedBox(height: 24),
-            _buildSettingsCard(),
-            SizedBox(height: 16),
-            _buildAppVersion(),
-            SizedBox(height: 20),
+            Icon(Icons.edit_outlined, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Edit Profile',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileImage(UserProfile user) {
-    return Stack(
-      children: [
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 15,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: CircleAvatar(
-            radius: 58,
-            backgroundImage: user.profileImagePath != null
-                ? FileImage(File(user.profileImagePath!))
-                : AssetImage('assets/profile_image.jpg') as ImageProvider,
-            backgroundColor: Colors.grey[300],
-            child: user.profileImagePath == null
-                ? Icon(Icons.person, size: 60, color: Colors.grey[600])
-                : null,
-          ),
-        ),
-        Positioned(
-          bottom: 5,
-          right: 5,
-          child: GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: Color(0xFFE57373),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: Icon(Icons.edit, color: Colors.white, size: 18),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserInfo(UserProfile user) {
-    return Column(
-      children: [
-        Text(
-          user.name,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          user.email,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.black54,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditButton() {
-    return GestureDetector(
-      onTap: _showEditProfileDialog,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Text(
-          'Edit Profile',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsCard(UserProfile user) {
+  Widget _buildModernStatsCard(UserProfile user) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 24),
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFE74C3C),
+            Color(0xFFC0392B),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Color(0xFFE74C3C).withOpacity(0.3),
             blurRadius: 15,
-            offset: Offset(0, 5),
+            offset: Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your Stats',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              )),
-          SizedBox(height: 24),
           Row(
             children: [
-              Expanded(
-                child: _buildStatItem(
-                  user.mealsCount.toString(),
-                  'Meals Suggested',
-                  Colors.orange,
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: _buildStatItem(
-                  user.favoritesCount.toString(),
-                  'Favorites Saved',
-                  Colors.red,
+              Icon(Icons.analytics_outlined, color: Colors.white, size: 24),
+              SizedBox(width: 12),
+              Text(
+                'Your Cooking Journey',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
             ],
           ),
+          SizedBox(height: 24),
+          _buildModernStatItem(
+            user.mealsCount.toString(),
+            'Meals Discovered',
+            Icons.restaurant_menu,
+            Colors.white,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String count, String label, Color color) {
+  Widget _buildModernStatItem(String count, String label, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(
-            label.contains('Meals') ? Icons.restaurant_menu : Icons.favorite,
-            size: 30,
-            color: color,
-          ),
-          SizedBox(height: 12),
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, size: 28, color: Colors.white),
           ),
-          SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.black54,
-              fontWeight: FontWeight.w500,
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -298,15 +388,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingsCard() {
+  Widget _buildModernSettingsCard() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: Offset(0, 5),
           ),
@@ -314,17 +404,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          _buildSettingsOption(
-            icon: Icons.settings,
+          _buildModernSettingsOption(
+            icon: Icons.settings_outlined,
             title: 'Settings',
+            subtitle: 'App preferences & configuration',
             onTap: () {
               Navigator.pushNamed(context, '/settings');
             },
             showDivider: true,
           ),
-          _buildSettingsOption(
-            icon: Icons.logout,
+          _buildModernSettingsOption(
+            icon: Icons.logout_outlined,
             title: 'Logout',
+            subtitle: 'Sign out of your account',
             isLogout: true,
             onTap: _showLogoutDialog,
             showDivider: false,
@@ -334,9 +426,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingsOption({
+  Widget _buildModernSettingsOption({
     required IconData icon,
     required String title,
+    required String subtitle,
     required VoidCallback onTap,
     bool isLogout = false,
     bool showDivider = true,
@@ -345,38 +438,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: EdgeInsets.all(20),
         child: Column(
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isLogout
                         ? Colors.red.withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                        : Color(0xFFE74C3C).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: isLogout ? Colors.red : Colors.grey[600],
-                    size: 20,
+                    color: isLogout ? Colors.red : Color(0xFFE74C3C),
+                    size: 24,
                   ),
                 ),
                 SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: isLogout ? Colors.red : Colors.black87,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isLogout ? Colors.red : Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios,
-                    color: Colors.grey[400], size: 16),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey[400],
+                  size: 16,
+                ),
               ],
             ),
             if (showDivider) ...[
@@ -390,8 +499,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAppVersion() {
-    return Text('App Version 1.0.0',
-        style: TextStyle(fontSize: 14, color: Colors.black54));
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        'App Version 1.0.0',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey[600],
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
   }
 
   void _showLogoutDialog() {
@@ -406,19 +528,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.logout, color: Colors.redAccent, size: 24),
+                child: Icon(Icons.logout_outlined, color: Colors.red, size: 24),
               ),
-              SizedBox(width: 12),
-              Text('Logout',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontSize: 20)),
+              SizedBox(width: 16),
+              Text(
+                'Logout',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontSize: 20,
+                ),
+              ),
             ],
           ),
           content: Padding(
@@ -431,8 +556,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[600], fontSize: 16),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -440,13 +567,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.pushReplacementNamed(context, '/authscreen');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: Text('Logout',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold)),
+              child: Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -470,19 +603,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFE74C3C), Color(0xFFC0392B)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.edit, color: Colors.redAccent, size: 24),
+                child: Icon(Icons.edit_outlined, color: Colors.white, size: 24),
               ),
-              SizedBox(width: 12),
-              Text('Edit Profile',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontSize: 20)),
+              SizedBox(width: 16),
+              Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontSize: 20,
+                ),
+              ),
             ],
           ),
           content: Column(
@@ -492,7 +630,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  prefixIcon: Icon(Icons.person, color: Colors.redAccent),
+                  prefixIcon: Icon(Icons.person_outline, color: Color(0xFFE74C3C)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Color(0xFFE74C3C)),
+                  ),
                 ),
               ),
               SizedBox(height: 16),
@@ -500,7 +645,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(Icons.email, color: Colors.redAccent),
+                  prefixIcon: Icon(Icons.email_outlined, color: Color(0xFFE74C3C)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Color(0xFFE74C3C)),
+                  ),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -509,8 +661,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[600], fontSize: 16),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -520,15 +674,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Profile updated successfully!')),
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Profile updated successfully!'),
+                      ],
+                    ),
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                  ),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-              child: Text('Save Changes',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFE74C3C),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Save Changes',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );

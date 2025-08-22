@@ -7,6 +7,7 @@ import 'dart:convert';
 import '../main.dart';
 import '../recipe_data.dart';
 import '../model/user_profile.dart';
+import 'history.dart';
 
 class SuggestionScreen extends StatefulWidget {
   const SuggestionScreen({super.key});
@@ -25,57 +26,94 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     super.didChangeDependencies();
     // Using a post-frame callback ensures that ModalRoute.of(context) is available.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Get the user answers from route arguments
+      // Get the user answers from route arguments (if any)
       userAnswers = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       _getSuggestion();
     });
   }
 
-  Future<void> addRecipeToHistory(Recipe recipe) async {
-    final prefs = await SharedPreferences.getInstance();
-    final historyJson = prefs.getStringList('cooking_history') ?? [];
+  Future<void> _saveToHistory(Recipe recipe) async {
+    try {
+      print('Saving recipe to history: ${recipe.name}');
 
-    // To prevent duplicates, remove the recipe if it already exists in history.
-    historyJson.removeWhere((item) {
-      final decoded = jsonDecode(item) as Map<String, dynamic>;
-      return decoded['id'] == recipe.id;
-    });
+      // Save directly to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getStringList('cooking_history') ?? [];
 
-    // Add the new recipe to the top of the list.
-    final recipeMap = {
-      'id': recipe.id,
-      'name': recipe.name,
-      'type': recipe.type,
-      'time': recipe.time,
-      'energy': recipe.energy,
-      'budget': recipe.budget,
-      'weather': recipe.weather,
-      'cuisine': recipe.cuisine,
-      'spiceLevel': recipe.spiceLevel,
-      'description': recipe.description,
-      'tags': recipe.tags,
-      'imageUrl': recipe.imageUrl,
-    };
-    historyJson.insert(0, jsonEncode(recipeMap));
+      // Check if recipe already exists
+      bool exists = false;
+      for (int i = 0; i < historyJson.length; i++) {
+        final Map<String, dynamic> existing = json.decode(historyJson[i]);
+        if (existing['id'] == recipe.id) {
+          // Update existing recipe's lastCookedAt
+          existing['lastCookedAt'] = DateTime.now().toIso8601String();
+          historyJson[i] = json.encode(existing);
+          exists = true;
+          break;
+        }
+      }
 
-    await prefs.setStringList('cooking_history', historyJson);
-  }
+      if (!exists) {
+        // Add new recipe to history
+        historyJson.add(json.encode({
+          'id': recipe.id,
+          'name': recipe.name,
+          'type': recipe.type,
+          'time': recipe.time,
+          'energy': recipe.energy,
+          'budget': recipe.budget,
+          'weather': recipe.weather,
+          'cuisine': recipe.cuisine,
+          'spiceLevel': recipe.spiceLevel,
+          'description': recipe.description,
+          'tags': recipe.tags,
+          'imageUrl': recipe.imageUrl,
+          'lastCookedAt': DateTime.now().toIso8601String(),
+        }));
+      }
 
-  Future<void> _toggleFavorite(Recipe recipe) async {
-    final prefs = await SharedPreferences.getInstance();
-    final favoriteIds = prefs.getStringList('favorite_recipes') ?? [];
+      await prefs.setStringList('cooking_history', historyJson);
+      print('Recipe saved to SharedPreferences successfully');
 
-    if (favoriteIds.contains(recipe.id)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('This recipe is already in your favorites!'),
-          backgroundColor: Colors.orangeAccent));
-    } else {
-      favoriteIds.add(recipe.id);
-      await prefs.setStringList('favorite_recipes', favoriteIds);
-      context.read<UserProfile>().incrementFavorites();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Added to your favorites!'),
-          backgroundColor: Colors.green));
+      // Increment meals count in profile
+      if (context.mounted) {
+        context.read<UserProfile>().incrementMeals();
+        print('Meals count incremented');
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.history, color: Colors.white),
+                SizedBox(width: 10),
+                Text(
+                  'Saved to History!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error saving to history: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving to history: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -85,7 +123,13 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     });
 
     // Check if we have user answers - if not, create default ones
-    Map<String, dynamic> answers = userAnswers ?? {};
+    Map<String, dynamic> answers = userAnswers ?? {
+      'energy': 'Active',
+      'time': '30-35 minutes',
+      'budget': 'Medium budget',
+      'weather': 'Normal',
+      'mood': 'Chicken'
+    };
 
     final allRecipes = RecipeData.getAllRecipesData();
 
@@ -133,10 +177,6 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
           suggestedRecipe = recipe;
           isLoading = false;
         });
-
-        // Add to history and update profile stats AFTER the suggestion is shown
-        addRecipeToHistory(recipe);
-        context.read<UserProfile>().incrementMeals();
       }
     });
   }
@@ -224,12 +264,12 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  label: const Text("Favorite",
+                  icon: const Icon(Icons.bookmark_border, color: Colors.white),
+                  label: const Text("Save to History",
                       style: TextStyle(color: Colors.white)),
-                  onPressed: () => _toggleFavorite(recipe),
+                  onPressed: () => _saveToHistory(recipe),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
