@@ -445,47 +445,6 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _divider(),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => context.read<SettingsModel>().setDarkMode(!settings.darkMode),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        child: Row(
-                          children: [
-                            _leadingCircle(Icons.dark_mode_outlined, const Color(0xFF6366F1)),
-                            const SizedBox(width: 16),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Dark Mode',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2E2E2E),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Switch to dark theme',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF999999),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Switch.adaptive(
-                              value: settings.darkMode,
-                              activeColor: const Color(0xFF6366F1),
-                              onChanged: (v) => context.read<SettingsModel>().setDarkMode(v),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
 

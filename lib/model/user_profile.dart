@@ -3,14 +3,12 @@ import 'package:flutter/foundation.dart';
 class UserProfile with ChangeNotifier {
   String _name = 'Unknown User';
   String _email = 'unknownuser@example.com';
-  int _mealsCount = 24;
-  int _favoritesCount = 8;
+  int _mealsCount = 0;
   String? _profileImagePath;
 
   String get name => _name;
   String get email => _email;
   int get mealsCount => _mealsCount;
-  int get favoritesCount => _favoritesCount;
   String? get profileImagePath => _profileImagePath;
 
   void updateName(String newName) {
@@ -30,11 +28,6 @@ class UserProfile with ChangeNotifier {
 
   void incrementMeals() {
     _mealsCount++;
-    notifyListeners();
-  }
-
-  void incrementFavorites() {
-    _favoritesCount++;
     notifyListeners();
   }
 
