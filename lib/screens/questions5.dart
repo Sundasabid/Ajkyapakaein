@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-
+import '../main.dart';
+import '../recipe_data.dart';
 
 class Questions5Screen extends StatefulWidget {
   const Questions5Screen({super.key});
@@ -8,6 +8,7 @@ class Questions5Screen extends StatefulWidget {
   @override
   State<Questions5Screen> createState() => _Questions5ScreenState();
 }
+
 
 class _Questions5ScreenState extends State<Questions5Screen> {
   String? selectedOption;
@@ -74,7 +75,7 @@ class _Questions5ScreenState extends State<Questions5Screen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "What is your budget level today?",
+                          "What type of food do you want today?",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -185,10 +186,40 @@ class _Questions5ScreenState extends State<Questions5Screen> {
                     onPressed: selectedOption == null
                         ? null
                         : () {
-                      Navigator.pushNamed(context, '/suggestions');
+                      // Get previous answers from route arguments
+                      Map<String, String> previousAnswers =
+                          ModalRoute.of(context)?.settings.arguments as Map<String, String>? ?? {};
+
+                      // Add current question's answer
+                      Map<String, String> completeAnswers = Map.from(previousAnswers);
+                      completeAnswers['mood'] = selectedOption!;
+
+                      // Create UserPreferences object
+                      UserPreferences userPrefs = UserPreferences(
+                        mood: completeAnswers['mood'] ?? '',
+                        time: completeAnswers['time'] ?? '',
+                        energy: completeAnswers['energy'] ?? '',
+                        budget: completeAnswers['budget'] ?? '',
+                        weather: completeAnswers['weather'] ?? '',
+                      );
+
+                      // Create repository with sample recipes
+                      InMemoryRecipeRepository repository =
+                      InMemoryRecipeRepository(RecipeData.getAllRecipesData());
+
+                      // Navigate to suggestions screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SuggestionsScreen(
+                            repository: repository,
+                            prefs: userPrefs,
+                          ),
+                        ),
+                      );
                     },
                     child: const Text(
-                      "Continue",
+                      "Get My Recipe!",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -205,5 +236,4 @@ class _Questions5ScreenState extends State<Questions5Screen> {
         ),
       ),
     );
-  }
-}
+  }}

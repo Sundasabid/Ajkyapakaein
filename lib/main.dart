@@ -645,6 +645,7 @@ class MyApp extends StatelessWidget {
       themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
       debugShowCheckedModeBanner: false,
       home: const GetStartedScreen(),
+      // In your main.dart, update the routes section in MyApp build method:
       routes: {
         '/auth': (context) => AuthGate(),
         '/home': (context) => HomeScreen(),
@@ -653,16 +654,7 @@ class MyApp extends StatelessWidget {
         '/questions3': (context) => Questions3Screen(),
         '/questions4': (context) => Questions4Screen(),
         '/questions5': (context) => Questions5Screen(),
-        '/suggestions': (context) => SuggestionsScreen(
-          repository: InMemoryRecipeRepository(InMemoryRecipeRepository.getSampleRecipes()),
-          prefs: UserPreferences(
-            mood: 'Chicken',
-            time: '30-35 minutes',
-            energy: 'Active',
-            budget: 'Medium budget',
-            weather: 'Cold',
-          ),
-        ),
+        '/suggestions': (context) => const SuggestionScreen(), // Use the original SuggestionScreen
         '/history': (context) => HistoryScreen(),
         '/settings': (context) => SettingsScreen(),
         '/profile': (context) => ProfileScreen(),

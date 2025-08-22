@@ -1,243 +1,259 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-// ----------------- Data Models -----------------
-class Recipe {
-  final String id;
-  final String name;
-  final String type; // Chicken, Vegetables, Mutton/Beef, Fish/SeaFood
-  final String time; // 15-20 minutes, 30-35 minutes, 1 hour, No worry of time
-  final String energy; // Low energy, Very low energy, Active
-  final String budget; // Low budget, High budget, Very low budget
-  final String weather; // Hot, Cold, Rainy, Normal
-  final String cuisine; // Indian, Chinese, etc.
-  final String spiceLevel; // Mild, Medium, Hot
-  final String description;
-  final List<String> tags;
-  final String imageUrl; // For recipe image
-  DateTime? lastCookedAt;
+import '../main.dart';
+import '../recipe_data.dart';
+import '../model/user_profile.dart';
 
-  Recipe({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.time,
-    required this.energy,
-    required this.budget,
-    required this.weather,
-    required this.cuisine,
-    required this.spiceLevel,
-    required this.description,
-    required this.tags,
-    required this.imageUrl,
-    this.lastCookedAt,
-  });
-}
-
-class UserPreferences {
-  final String mood;
-  final String time;
-  final String energy;
-  final String budget;
-  final String weather;
-
-  UserPreferences({
-    required this.mood,
-    required this.time,
-    required this.energy,
-    required this.budget,
-    required this.weather,
-  });
-}
-
-// ----------------- Repository Interface -----------------
-abstract class RecipeRepository {
-  Future<List<Recipe>> recommend({
-    Set<String> excludeIds,
-    required UserPreferences prefs,
-    Duration repeatAfter,
-    int topN,
-  });
-
-  Future<void> markCooked(String recipeId, DateTime when);
-}
-
-// ----------------- InMemory Repository -----------------
-class InMemoryRecipeRepository implements RecipeRepository {
-  final List<Recipe> _recipes;
-
-  InMemoryRecipeRepository(this._recipes);
+class SuggestionScreen extends StatefulWidget {
+  const SuggestionScreen({super.key});
 
   @override
-  Future<List<Recipe>> recommend({
-    Set<String> excludeIds = const {},
-    required UserPreferences prefs,
-    Duration repeatAfter = const Duration(days: 3),
-    int topN = 3,
-  }) async {
-    final now = DateTime.now();
+  State<SuggestionScreen> createState() => _SuggestionScreenState();
+}
 
-    // Filter recently cooked & excluded IDs
-    final filtered = _recipes.where((r) {
-      if (excludeIds.contains(r.id)) return false;
-      if (r.lastCookedAt != null &&
-          now
-              .difference(r.lastCookedAt!)
-              .inDays < repeatAfter.inDays) {
-        return false;
-      }
-      return true;
-    }).toList();
+class _SuggestionScreenState extends State<SuggestionScreen> {
+  Recipe? suggestedRecipe;
+  bool isLoading = true;
+  Map<String, dynamic>? userAnswers;
 
-    // Sort by score
-    filtered.sort((a, b) {
-      int scoreA = _scoreRecipe(a, prefs);
-      int scoreB = _scoreRecipe(b, prefs);
-      return scoreB.compareTo(scoreA);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Using a post-frame callback ensures that ModalRoute.of(context) is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Get the user answers from route arguments
+      userAnswers = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      _getSuggestion();
+    });
+  }
+
+  Future<void> addRecipeToHistory(Recipe recipe) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = prefs.getStringList('cooking_history') ?? [];
+
+    // To prevent duplicates, remove the recipe if it already exists in history.
+    historyJson.removeWhere((item) {
+      final decoded = jsonDecode(item) as Map<String, dynamic>;
+      return decoded['id'] == recipe.id;
     });
 
-    return filtered.take(topN).toList();
+    // Add the new recipe to the top of the list.
+    final recipeMap = {
+      'id': recipe.id,
+      'name': recipe.name,
+      'type': recipe.type,
+      'time': recipe.time,
+      'energy': recipe.energy,
+      'budget': recipe.budget,
+      'weather': recipe.weather,
+      'cuisine': recipe.cuisine,
+      'spiceLevel': recipe.spiceLevel,
+      'description': recipe.description,
+      'tags': recipe.tags,
+      'imageUrl': recipe.imageUrl,
+    };
+    historyJson.insert(0, jsonEncode(recipeMap));
+
+    await prefs.setStringList('cooking_history', historyJson);
   }
 
-  int _scoreRecipe(Recipe recipe, UserPreferences prefs) {
-    int score = 0;
+  Future<void> _toggleFavorite(Recipe recipe) async {
+    final prefs = await SharedPreferences.getInstance();
+    final favoriteIds = prefs.getStringList('favorite_recipes') ?? [];
 
-    // Mood/Type matching (highest priority)
-    if (recipe.type == prefs.mood) score += 50;
+    if (favoriteIds.contains(recipe.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('This recipe is already in your favorites!'),
+          backgroundColor: Colors.orangeAccent));
+    } else {
+      favoriteIds.add(recipe.id);
+      await prefs.setStringList('favorite_recipes', favoriteIds);
+      context.read<UserProfile>().incrementFavorites();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Added to your favorites!'),
+          backgroundColor: Colors.green));
+    }
+  }
 
-    // Time matching (very important)
-    if (recipe.time == prefs.time) score += 40;
+  void _getSuggestion() {
+    setState(() {
+      isLoading = true;
+    });
 
-    // Energy level matching (important for cooking feasibility)
-    if (recipe.energy == prefs.energy) score += 30;
+    // Check if we have user answers - if not, create default ones
+    Map<String, dynamic> answers = userAnswers ?? {};
 
-    // Budget matching (practical consideration)
-    if (recipe.budget == prefs.budget) score += 20;
+    final allRecipes = RecipeData.getAllRecipesData();
 
-    // Weather matching (seasonal preference)
-    if (recipe.weather == prefs.weather) score += 15;
+    // --- IMPROVED SCORING LOGIC ---
+    // Calculate a score for each recipe based on how many answers it matches.
+    var scoredRecipes = allRecipes.map((recipe) {
+      int score = 0;
 
-    // Add randomness to avoid same suggestions
-    score += (recipe.name.hashCode % 10);
+      // Check each answer and give points for matches
+      if (answers['energy'] != null && recipe.energy == answers['energy']) score += 5;
+      if (answers['time'] != null && recipe.time == answers['time']) score += 4;
+      if (answers['budget'] != null && recipe.budget == answers['budget']) score += 3;
+      if (answers['weather'] != null && recipe.weather == answers['weather']) score += 3;
+      if (answers['mood'] != null && recipe.type == answers['mood']) score += 5;
 
-    return score;
+      return {'recipe': recipe, 'score': score};
+    }).toList();
+
+    // Sort by score (highest first)
+    scoredRecipes.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+
+    // Find the highest score achieved by any recipe.
+    int maxScore = scoredRecipes.isNotEmpty ? scoredRecipes.first['score'] as int : 0;
+
+    // Get recipes with the highest score, or if no matches, get top 10
+    List<Recipe> bestMatches;
+    if (maxScore > 0) {
+      // Get all recipes with the highest score
+      bestMatches = scoredRecipes
+          .where((item) => item['score'] == maxScore)
+          .map((item) => item['recipe'] as Recipe)
+          .toList();
+    } else {
+      // If no matches, take top 10 recipes randomly
+      bestMatches = scoredRecipes.take(10).map((item) => item['recipe'] as Recipe).toList();
+    }
+
+    // Select a random recipe from the best matches.
+    final random = Random();
+    final recipe = bestMatches[random.nextInt(bestMatches.length)];
+
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          suggestedRecipe = recipe;
+          isLoading = false;
+        });
+
+        // Add to history and update profile stats AFTER the suggestion is shown
+        addRecipeToHistory(recipe);
+        context.read<UserProfile>().incrementMeals();
+      }
+    });
   }
 
   @override
-  Future<void> markCooked(String recipeId, DateTime when) async {
-    final recipe = _recipes.firstWhere((r) => r.id == recipeId);
-    recipe.lastCookedAt = when;
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Chef's Suggestion",
+            style:
+            TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/background.jpg"),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: isLoading
+              ? const CircularProgressIndicator(color: Colors.deepOrange)
+              : suggestedRecipe == null
+              ? const Text("Couldn't find a recipe. Try again!",
+              style: TextStyle(fontSize: 18, color: Colors.black54))
+              : buildRecipeCard(suggestedRecipe!),
+        ),
+      ),
+    );
   }
 
-
-// Sample recipes for demonstration
-// static List<Recipe> getSampleRecipes() {
-//   return [
-//   Recipe(
-//     id: '1',
-//     name: 'Butter Chicken with Garlic Naan',
-//     type: 'Chicken',
-//     time: '45 mins',
-//     energy: 'Active',
-//     budget: 'High budget',
-//     weather: 'Cold',
-//     cuisine: 'Indian',
-//     spiceLevel: 'Medium',
-//     description: 'Creamy tomato sauce with tender chicken pieces, flavored with aromatic spices and served with freshly baked garlic naan.',
-//     tags: ['Chicken', 'Tomato', 'Cream', 'Spices'],
-//     imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '2',
-//   name: 'Aloo Gobi',
-//   type: 'Vegetables',
-//   time: '30-35 minutes',
-//   energy: 'Low energy',
-//   budget: 'Low budget',
-//   weather: 'Normal',
-//   cuisine: 'Indian',
-//   spiceLevel: 'Mild',
-//   description: 'Traditional potato and cauliflower curry with turmeric and spices, perfect for a light meal.',
-//   tags: ['Vegetables', 'Potato', 'Cauliflower', 'Turmeric'],
-//   imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '3',
-//   name: 'Fish Karahi',
-//   type: 'Fish/SeaFood',
-//   time: '1 hour',
-//   energy: 'Active',
-//   budget: 'High budget',
-//   weather: 'Hot',
-//   cuisine: 'Pakistani',
-//   spiceLevel: 'Hot',
-//   description: 'Fresh fish cooked in traditional karahi style with tomatoes, green chilies and aromatic spices.',
-//   tags: ['Fish', 'Tomato', 'Chilies', 'Spices'],
-//   imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '4',
-//   name: 'Quick Egg Fried Rice',
-//   type: 'Vegetables',
-//   time: '15-20 minutes',
-//   energy: 'Very low energy',
-//   budget: 'Very low budget',
-//   weather: 'Rainy',
-//   cuisine: 'Chinese',
-//   spiceLevel: 'Mild',
-//   description: 'Simple and quick fried rice with eggs and vegetables, perfect for when you want something fast.',
-//   tags: ['Rice', 'Eggs', 'Vegetables'],
-//   imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '5',
-//   name: 'Mutton Biryani',
-//   type: 'Mutton/Beef',
-//   time: 'No worry of time',
-//   energy: 'Active',
-//   budget: 'High budget',
-//   weather: 'Cold',
-//   cuisine: 'Pakistani',
-//   spiceLevel: 'Hot',
-//   description: 'Fragrant basmati rice layered with spiced mutton, perfect for special occasions.',
-//   tags: ['Mutton', 'Rice', 'Biryani', 'Saffron'],
-//   imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '6',
-//   name: 'Chicken Biryani',
-//   type: 'Chicken',
-//   time: '1 hour',
-//   energy: 'Active',
-//   budget: 'High budget',
-//   weather: 'Normal',
-//   cuisine: 'Pakistani',
-//   spiceLevel: 'Medium',
-//   description: 'Aromatic basmati rice cooked with tender chicken and traditional spices.',
-//   tags: ['Chicken', 'Rice', 'Biryani', 'Spices'],
-//   imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '7',
-//   name: 'Dal Chawal',
-//   type: 'Vegetables',
-//   time: '30-35 minutes',
-//   energy: 'Low energy',
-//   budget: 'Very low budget',
-//   weather: 'Rainy',
-//   cuisine: 'Pakistani',
-//   spiceLevel: 'Mild',
-//   description: 'Simple lentils served with steamed rice, comfort food at its best.',
-//   tags: ['Lentils', 'Rice', 'Comfort Food'],
-//   imageUrl: '',
-//   ),
-//   Recipe(
-//   id: '8',
-//   name: 'Chicken Karahi',
-//   type: 'Chicken',
-//   time: '30-35 minutes',
-//   energy: 'Active',
-//   budget: 'High budget',
-//   weather: 'Hot',
-//   cuisine: 'Pakistani
-
+  Widget buildRecipeCard(Recipe recipe) {
+    return Container(
+      margin: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 5,
+          )
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              recipe.name,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              recipe.description,
+              style:
+              TextStyle(fontSize: 16, color: Colors.grey[700], height: 1.5),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: recipe.tags
+                  .map((tag) => Chip(
+                label: Text(tag),
+                backgroundColor: Colors.deepOrange.withOpacity(0.1),
+                labelStyle: const TextStyle(
+                    color: Colors.deepOrange,
+                    fontWeight: FontWeight.w600),
+              ))
+                  .toList(),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.favorite_border, color: Colors.white),
+                  label: const Text("Favorite",
+                      style: TextStyle(color: Colors.white)),
+                  onPressed: () => _toggleFavorite(recipe),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                ElevatedButton(
+                  child: const Text("Try Again",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  onPressed: _getSuggestion,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepOrange,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
 }

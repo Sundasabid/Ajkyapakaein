@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 class Questions3Screen extends StatefulWidget {
   const Questions3Screen({super.key});
 
@@ -185,7 +183,20 @@ class _Questions3ScreenState extends State<Questions3Screen> {
                     onPressed: selectedOption == null
                         ? null
                         : () {
-                      Navigator.pushNamed(context, '/questions4');
+                      // Get previous answers from route arguments
+                      Map<String, String> previousAnswers =
+                          ModalRoute.of(context)?.settings.arguments as Map<String, String>? ?? {};
+
+                      // Add current question's answer
+                      Map<String, String> completeAnswers = Map.from(previousAnswers);
+                      completeAnswers['weather'] = selectedOption!;
+
+                      // Navigate with complete answers
+                      Navigator.pushNamed(
+                        context,
+                        '/questions4',
+                        arguments: completeAnswers,
+                      );
                     },
                     child: const Text(
                       "Continue",

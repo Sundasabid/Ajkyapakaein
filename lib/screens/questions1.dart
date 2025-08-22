@@ -10,7 +10,7 @@ class QuestionsScreen extends StatefulWidget {
 class _QuestionsScreenState extends State<QuestionsScreen> {
   String? selectedOption;
 
-  final List<String> moods = ["Low Energy", "Normal", "Active"];
+  final List<String> moods = ["Low energy", "Active", "Very low energy"];
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +183,16 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     onPressed: selectedOption == null
                         ? null
                         : () {
-                      Navigator.pushNamed(context, '/questions2');
+                      // Create answers map and pass to next screen
+                      Map<String, String> answers = {
+                        'energy': selectedOption!,
+                      };
+
+                      Navigator.pushNamed(
+                        context,
+                        '/questions2',
+                        arguments: answers,
+                      );
                     },
                     child: const Text(
                       "Continue",

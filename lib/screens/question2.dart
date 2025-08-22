@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 class Questions2Screen extends StatefulWidget {
   const Questions2Screen({super.key});
 
@@ -12,7 +10,7 @@ class Questions2Screen extends StatefulWidget {
 class _Questions2ScreenState extends State<Questions2Screen> {
   String? selectedOption;
 
-  final List<String> moods = ["Low Budget", "High Budget", "Very Low Budget"];
+  final List<String> moods = ["Low budget", "Medium budget", "High budget", "Very low budget"];
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +183,20 @@ class _Questions2ScreenState extends State<Questions2Screen> {
                     onPressed: selectedOption == null
                         ? null
                         : () {
-                      Navigator.pushNamed(context, '/questions3');
+                      // Get previous answers from route arguments
+                      Map<String, String> previousAnswers =
+                          ModalRoute.of(context)?.settings.arguments as Map<String, String>? ?? {};
+
+                      // Add current question's answer
+                      Map<String, String> completeAnswers = Map.from(previousAnswers);
+                      completeAnswers['budget'] = selectedOption!;
+
+                      // Navigate with complete answers
+                      Navigator.pushNamed(
+                        context,
+                        '/questions3',
+                        arguments: completeAnswers,
+                      );
                     },
                     child: const Text(
                       "Continue",
