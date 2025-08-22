@@ -32,6 +32,15 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh history items every time the screen is accessed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadHistoryItems();
+    });
+  }
+
+  @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();

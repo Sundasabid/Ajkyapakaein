@@ -663,16 +663,7 @@ class MyApp extends StatelessWidget {
         '/questions3': (context) => Questions3Screen(),
         '/questions4': (context) => Questions4Screen(),
         '/questions5': (context) => Questions5Screen(),
-        '/suggestions': (context) => SuggestionsScreen(
-          repository: InMemoryRecipeRepository(InMemoryRecipeRepository.getSampleRecipes()),
-          prefs: UserPreferences(
-            mood: 'Chicken',
-            time: '30-35 minutes',
-            energy: 'Active',
-            budget: 'Medium budget',
-            weather: 'Cold',
-          ),
-        ),
+        '/suggestions': (context) => SuggestionScreen(),
         '/history': (context) => HistoryScreen(),
         '/settings': (context) => SettingsScreen(),
         '/profile': (context) => ProfileScreen(),
