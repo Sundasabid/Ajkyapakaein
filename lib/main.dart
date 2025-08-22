@@ -224,6 +224,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+    // Persist to local history and update meals count in profile
+    HistoryScreen.addToHistory(recipe);
+    try {
+      final userProfile = context.read<UserProfile>();
+      userProfile.incrementMeals();
+    } catch (_) {
+      // ignore if provider not available in this context
+    }
   }
 
   @override

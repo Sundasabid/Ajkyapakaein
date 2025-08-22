@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../model/user_profile.dart';
-import 'model/user_profile.dart';
 
 import 'dart:io';
 
@@ -237,20 +236,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               )),
           SizedBox(height: 24),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Expanded(
                 child: _buildStatItem(
                   user.mealsCount.toString(),
                   'Meals Suggested',
                   Colors.orange,
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: _buildStatItem(
-                  user.favoritesCount.toString(),
-                  'Favorites Saved',
-                  Colors.red,
                 ),
               ),
             ],
@@ -270,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           Icon(
-            label.contains('Meals') ? Icons.restaurant_menu : Icons.favorite,
+            Icons.restaurant_menu,
             size: 30,
             color: color,
           ),
