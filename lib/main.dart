@@ -850,7 +850,7 @@ class GetStartedScreen extends StatelessWidget {
                                   FeatureChip(text: "Personalized suggestions", color: Color(0xFFE94F37)),
                                   FeatureChip(text: "Quick & easy recipes", color: Color(0xFFF6AE2D)),
                                   FeatureChip(text: "Ingredient search instantly", color: Color(0xFFE94F37)),
-                                  FeatureChip(text: "Save favorites", color: Color(0xFFF6AE2D)),
+                                  FeatureChip(text: "Save to history", color: Color(0xFFF6AE2D)),
                                 ],
                               ),
                               const SizedBox(height: 20),
