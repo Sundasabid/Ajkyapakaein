@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -203,36 +205,83 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
   }
 
   void _saveToHistory(Recipe recipe) async {
-    // Actually save to history
-    await HistoryScreen.addToHistory(recipe);
-    
-    // Increment meals count in profile
-    if (context.mounted) {
-      context.read<UserProfile>().incrementMeals();
-    }
-    
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.history, color: Colors.white),
-              SizedBox(width: 10),
-              Text(
-                'Saved to History!',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-            ],
+    try {
+      // Save directly to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getStringList('cooking_history') ?? [];
+
+      // Check if recipe already exists
+      bool exists = false;
+      for (int i = 0; i < historyJson.length; i++) {
+        final Map<String, dynamic> existing = json.decode(historyJson[i]);
+        if (existing['id'] == recipe.id) {
+          // Update existing recipe's lastCookedAt
+          existing['lastCookedAt'] = DateTime.now().toIso8601String();
+          historyJson[i] = json.encode(existing);
+          exists = true;
+          break;
+        }
+      }
+
+      if (!exists) {
+        // Add new recipe to history
+        historyJson.add(json.encode({
+          'id': recipe.id,
+          'name': recipe.name,
+          'type': recipe.type,
+          'time': recipe.time,
+          'energy': recipe.energy,
+          'budget': recipe.budget,
+          'weather': recipe.weather,
+          'cuisine': recipe.cuisine,
+          'spiceLevel': recipe.spiceLevel,
+          'description': recipe.description,
+          'tags': recipe.tags,
+          'imageUrl': recipe.imageUrl,
+          'lastCookedAt': DateTime.now().toIso8601String(),
+        }));
+      }
+
+      await prefs.setStringList('cooking_history', historyJson);
+      
+      // Increment meals count in profile
+      if (context.mounted) {
+        context.read<UserProfile>().incrementMeals();
+      }
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.history, color: Colors.white),
+                SizedBox(width: 10),
+                Text(
+                  'Saved to History!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 2),
           ),
-          backgroundColor: Colors.green.shade600,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        );
+      }
+    } catch (e) {
+      print('Error saving to history: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving to history'),
+            backgroundColor: Colors.red,
           ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+        );
+      }
     }
   }
 
