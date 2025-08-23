@@ -421,60 +421,88 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: currentRecipe.imageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: currentRecipe.imageUrl,
+                          ? Image.network(
+                              currentRecipe.imageUrl,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFFD2691E),
-                                      Color(0xFFCD853F),
-                                    ],
+                              loadingBuilder: (context, child, loadingProgress) {
+                                print('Main.dart - Loading image: ${currentRecipe.imageUrl}');
+                                if (loadingProgress == null) {
+                                  print('Main.dart - Image loaded successfully: ${currentRecipe.imageUrl}');
+                                  return child;
+                                }
+                                print('Main.dart - Loading progress: ${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes}');
+                                return Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFD2691E),
+                                        Color(0xFFCD853F),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  Container(
-                                    decoration: const BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          Color(0xFFD2691E),
-                                          Color(0xFFCD853F),
-                                        ],
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Main.dart - Image failed to load: ${currentRecipe.imageUrl}');
+                                print('Main.dart - Error: $error');
+                                print('Main.dart - StackTrace: $stackTrace');
+                                return Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFFD2691E),
+                                            Color(0xFFCD853F),
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.restaurant_menu,
+                                              size: 80,
+                                              color: Colors.white54,
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Image failed to load',
+                                              style: TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                    child: const Icon(
-                                      Icons.restaurant_menu,
-                                      size: 80,
-                                      color: Colors.white54,
-                                    ),
-                                  ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.transparent,
-                                          Colors.black.withOpacity(0.3),
-                                        ],
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withOpacity(0.3),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                );
+                              },
                             )
                           : Stack(
                               fit: StackFit.expand,
@@ -490,10 +518,25 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                                       ],
                                     ),
                                   ),
-                                  child: const Icon(
-                                    Icons.restaurant_menu,
-                                    size: 80,
-                                    color: Colors.white54,
+                                  child: const Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.restaurant_menu,
+                                          size: 80,
+                                          color: Colors.white54,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'No image URL',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 Container(

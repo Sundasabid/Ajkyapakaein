@@ -250,6 +250,42 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // TEST IMAGE - Simple network image test
+            Container(
+              width: 100,
+              height: 100,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red, width: 2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Image.network(
+                'https://via.placeholder.com/100x100/FF0000/FFFFFF?text=TEST',
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  print('TEST IMAGE - Loading: https://via.placeholder.com/100x100/FF0000/FFFFFF?text=TEST');
+                  if (loadingProgress == null) {
+                    print('TEST IMAGE - Loaded successfully');
+                    return child;
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print('TEST IMAGE - Failed to load');
+                  print('TEST IMAGE - Error: $error');
+                  return Container(
+                    color: Colors.red,
+                    child: const Center(
+                      child: Text('TEST\nFAILED', 
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
             // Recipe Image
             if (recipe.imageUrl.isNotEmpty)
               Container(
@@ -267,47 +303,109 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: CachedNetworkImage(
-                    imageUrl: recipe.imageUrl,
+                  child: Image.network(
+                    recipe.imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFD2691E),
-                            Color(0xFFCD853F),
-                          ],
+                    loadingBuilder: (context, child, loadingProgress) {
+                      print('Loading image: ${recipe.imageUrl}');
+                      if (loadingProgress == null) {
+                        print('Image loaded successfully: ${recipe.imageUrl}');
+                        return child;
+                      }
+                      print('Loading progress: ${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes}');
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFD2691E),
+                              Color(0xFFCD853F),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Image failed to load: ${recipe.imageUrl}');
+                      print('Error: $error');
+                      print('StackTrace: $stackTrace');
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFD2691E),
+                              Color(0xFFCD853F),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.restaurant_menu,
+                                size: 60,
+                                color: Colors.white54,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Image failed to load',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFD2691E),
+                      Color(0xFFCD853F),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.restaurant_menu,
+                        size: 60,
+                        color: Colors.white54,
                       ),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
+                      SizedBox(height: 8),
+                      Text(
+                        'No image URL',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
                       ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFD2691E),
-                            Color(0xFFCD853F),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.restaurant_menu,
-                          size: 60,
-                          color: Colors.white54,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ),
