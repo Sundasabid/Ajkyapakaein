@@ -129,23 +129,36 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
       'time': '30-35 minutes',
       'budget': 'Medium budget',
       'weather': 'Normal',
-      'mood': 'Chicken'
+      'type': 'Chicken' // Fixed: was 'mood'
     };
 
     final allRecipes = RecipeData.getAllRecipesData();
     print('Total recipes loaded: ${allRecipes.length}');
 
-    // --- IMPROVED SCORING LOGIC ---
-    // Calculate a score for each recipe based on how many answers it matches.
+    // --- UNIFIED SCORING LOGIC (matching main.dart) ---
     var scoredRecipes = allRecipes.map((recipe) {
       int score = 0;
-
-      // Check each answer and give points for matches
-      if (answers['energy'] != null && recipe.energy == answers['energy']) score += 5;
-      if (answers['time'] != null && recipe.time == answers['time']) score += 4;
-      if (answers['budget'] != null && recipe.budget == answers['budget']) score += 3;
-      if (answers['weather'] != null && recipe.weather == answers['weather']) score += 3;
-      if (answers['mood'] != null && recipe.type == answers['mood']) score += 5;
+      
+      // Prioritize exact matches with higher weights
+      if (answers['type'] != null && recipe.type == answers['type']) score += 50;        // Most important - food type preference
+      if (answers['energy'] != null && recipe.energy == answers['energy']) score += 40;    // Energy level match
+      if (answers['time'] != null && recipe.time == answers['time']) score += 30;        // Time availability
+      if (answers['budget'] != null && recipe.budget == answers['budget']) score += 25;    // Budget constraints
+      if (answers['weather'] != null && recipe.weather == answers['weather']) score += 20;  // Weather appropriateness
+      
+      // Add partial matches for flexibility
+      // If user has "Very low energy" but recipe needs "Low energy", still give some points
+      if (answers['energy'] == "Very low energy" && recipe.energy == "Low energy") score += 20;
+      if (answers['energy'] == "Low energy" && recipe.energy == "Very low energy") score += 15;
+      
+      // Budget flexibility - allow one level up/down
+      if (answers['budget'] == "Very low budget" && recipe.budget == "Low budget") score += 15;
+      if (answers['budget'] == "Low budget" && recipe.budget == "Medium budget") score += 10;
+      if (answers['budget'] == "Medium budget" && recipe.budget == "High budget") score += 5;
+      
+      // Weather flexibility - Normal weather can match with any weather
+      if (answers['weather'] == "Normal" && recipe.weather != "Normal") score += 10;
+      if (recipe.weather == "Normal" && answers['weather'] != "Normal") score += 10;
 
       return {'recipe': recipe, 'score': score};
     }).toList();

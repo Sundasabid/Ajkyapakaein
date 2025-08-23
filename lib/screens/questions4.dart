@@ -72,7 +72,7 @@ class _Questions4ScreenState extends State<Questions4Screen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "In how much time you want to make it?",
+                          "How much time do you have for cooking today?",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _Questions4ScreenState extends State<Questions4Screen> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          "Select one option that best matches your preference",
+                          "Include prep time - we'll suggest recipes that fit your schedule",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.black54,

@@ -16,7 +16,7 @@ class RecipeData {
         cuisine: 'Pakistani',
         spiceLevel: 'Hot',
         description: 'Traditional chicken karahi with tomatoes and aromatic spices.',
-        tags: ['Chicken', 'Karahi', 'Tomatoes', 'Spices'],
+        tags: ['Chicken', 'Karahi', 'Tomatoes', 'Spices', 'Winter', 'Warm'],
         imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
       ),
       Recipe(
@@ -26,11 +26,11 @@ class RecipeData {
         time: 'No worry of time',
         energy: 'Active',
         budget: 'High budget',
-        weather: 'Normal',
+        weather: 'Normal', // Available year-round
         cuisine: 'Pakistani',
         spiceLevel: 'Medium',
         description: 'Fragrant basmati rice layered with spiced chicken pieces.',
-        tags: ['Chicken', 'Rice', 'Biryani', 'Saffron'],
+        tags: ['Chicken', 'Rice', 'Biryani', 'Saffron', 'Festive', 'Popular'],
         imageUrl: 'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=400',
       ),
       Recipe(
@@ -40,11 +40,11 @@ class RecipeData {
         time: '1 hour',
         energy: 'Low energy',
         budget: 'Medium budget',
-        weather: 'Rainy',
+        weather: 'Normal', // Good for any weather
         cuisine: 'Pakistani',
         spiceLevel: 'Mild',
-        description: 'Simple one-pot chicken and rice dish, perfect for rainy days.',
-        tags: ['Chicken', 'Rice', 'One-pot', 'Comfort'],
+        description: 'Simple one-pot chicken and rice dish, perfect comfort food.',
+        tags: ['Chicken', 'Rice', 'One-pot', 'Comfort', 'Easy'],
         imageUrl: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400',
       ),
       Recipe(
@@ -424,11 +424,11 @@ class RecipeData {
         time: '30-35 minutes',
         energy: 'Low energy',
         budget: 'Medium budget',
-        weather: 'Normal',
+        weather: 'Normal', // Available in multiple seasons
         cuisine: 'Pakistani',
         spiceLevel: 'Medium',
         description: 'Traditional fish curry with aromatic spices.',
-        tags: ['Fish', 'Curry', 'Spices', 'Traditional'],
+        tags: ['Fish', 'Curry', 'Spices', 'Traditional', 'Protein'],
         imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400',
       ),
       Recipe(
@@ -438,11 +438,11 @@ class RecipeData {
         time: '1 hour',
         energy: 'Active',
         budget: 'High budget',
-        weather: 'Normal',
+        weather: 'Normal', // Available year-round
         cuisine: 'Pakistani',
         spiceLevel: 'Medium',
         description: 'Aromatic fish biryani with basmati rice.',
-        tags: ['Fish', 'Rice', 'Biryani', 'Aromatic'],
+        tags: ['Fish', 'Rice', 'Biryani', 'Aromatic', 'Special'],
         imageUrl: 'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=400',
       ),
       Recipe(
@@ -452,11 +452,11 @@ class RecipeData {
         time: '30-35 minutes',
         energy: 'Low energy',
         budget: 'Medium budget',
-        weather: 'Normal',
+        weather: 'Hot', // Good for hot weather
         cuisine: 'Pakistani',
         spiceLevel: 'Hot',
         description: 'Crispy fried fish with spicy masala coating.',
-        tags: ['Fish', 'Fried', 'Crispy', 'Spicy'],
+        tags: ['Fish', 'Fried', 'Crispy', 'Spicy', 'Summer'],
         imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400',
       ),
       Recipe(

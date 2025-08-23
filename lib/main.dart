@@ -153,21 +153,61 @@ class InMemoryRecipeRepository implements RecipeRepository {
     if (recipe.budget == prefs.budget) score += 25;    // Budget constraints
     if (recipe.weather == prefs.weather) score += 20;  // Weather appropriateness
     
+    // REALISTIC ENERGY-TIME CONSTRAINTS
+    // Very low energy users should get quick recipes regardless of their time preference
+    if (prefs.energy == "Very low energy") {
+      if (recipe.time == "15-20 minutes") score += 35; // Boost quick recipes
+      else if (recipe.time == "30-35 minutes") score += 15; // Some points for medium
+      else if (recipe.time == "1 hour" || recipe.time == "No worry of time") score -= 20; // Penalty for long recipes
+    }
+    
+    // Low energy users prefer shorter recipes
+    if (prefs.energy == "Low energy") {
+      if (recipe.time == "15-20 minutes") score += 25;
+      else if (recipe.time == "30-35 minutes") score += 15;
+      else if (recipe.time == "1 hour") score -= 5;
+      else if (recipe.time == "No worry of time") score -= 15;
+    }
+    
     // Add partial matches for flexibility
     // If user has "Very low energy" but recipe needs "Low energy", still give some points
     if (prefs.energy == "Very low energy" && recipe.energy == "Low energy") score += 20;
     if (prefs.energy == "Low energy" && recipe.energy == "Very low energy") score += 15;
     
     // Budget flexibility - allow one level up/down
-    if (prefs.budget == "Very low budget" && recipe.budget == "Low budget") score += 15;
-    if (prefs.budget == "Low budget" && recipe.budget == "Medium budget") score += 10;
-    if (prefs.budget == "Medium budget" && recipe.budget == "High budget") score += 5;
+    String userBudgetLevel = _extractBudgetLevel(prefs.budget);
+    String recipeBudgetLevel = _extractBudgetLevel(recipe.budget);
+    
+    if (userBudgetLevel == "Very low budget" && recipeBudgetLevel == "Low budget") score += 15;
+    if (userBudgetLevel == "Low budget" && recipeBudgetLevel == "Medium budget") score += 10;
+    if (userBudgetLevel == "Medium budget" && recipeBudgetLevel == "High budget") score += 5;
     
     // Weather flexibility - Normal weather can match with any weather
     if (prefs.weather == "Normal" && recipe.weather != "Normal") score += 10;
     if (recipe.weather == "Normal" && prefs.weather != "Normal") score += 10;
     
+    // SEASONAL INTELLIGENCE - Boost dishes appropriate for current season
+    // You can enhance this further with actual date checking
+    if (prefs.weather == "Hot") {
+      if (recipe.tags.contains("Summer") || recipe.tags.contains("Cooling") || recipe.tags.contains("Light")) score += 15;
+    }
+    if (prefs.weather == "Cold") {
+      if (recipe.tags.contains("Winter") || recipe.tags.contains("Warm") || recipe.tags.contains("Rich")) score += 15;
+    }
+    if (prefs.weather == "Rainy") {
+      if (recipe.tags.contains("Comfort") || recipe.tags.contains("Fritters") || recipe.tags.contains("Hot")) score += 15;
+    }
+    
     return score;
+  }
+  
+  // Helper function to extract budget level from budget string
+  String _extractBudgetLevel(String budget) {
+    if (budget.contains("Very low budget")) return "Very low budget";
+    if (budget.contains("Low budget")) return "Low budget";
+    if (budget.contains("Medium budget")) return "Medium budget";
+    if (budget.contains("High budget")) return "High budget";
+    return budget; // fallback
   }
 
   @override

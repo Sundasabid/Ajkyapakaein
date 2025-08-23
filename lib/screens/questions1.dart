@@ -72,7 +72,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "What is your energy level today?",
+                          "How much cooking effort can you put in today?",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          "Select one option that best matches your preference",
+                          "This helps us suggest recipes that match your energy level",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.black54,

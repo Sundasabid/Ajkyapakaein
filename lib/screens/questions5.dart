@@ -14,6 +14,8 @@ class _Questions5ScreenState extends State<Questions5Screen> {
   String? selectedOption;
 
   final List<String> moods = ["Chicken", "Vegetables", "Mutton/Beef", "Fish/SeaFood"];
+  final List<String> familySizes = ["1-2 people", "3-4 people", "5-6 people", "Large family (7+)"];
+  String? selectedFamilySize;
 
   @override
   Widget build(BuildContext context) {
@@ -99,74 +101,175 @@ class _Questions5ScreenState extends State<Questions5Screen> {
                 // Options
                 Expanded(
                   child: ListView(
-                    children: moods.map((mood) {
-                      final isSelected = selectedOption == mood;
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedOption = mood;
-                          });
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 18, horizontal: 20),
-                          decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? const LinearGradient(
-                              colors: [Colors.deepOrange, Colors.orange],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                                : const LinearGradient(
-                              colors: [Colors.white, Colors.white],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isSelected
-                                    ? Colors.deepOrange.withOpacity(0.4)
-                                    : Colors.grey.withOpacity(0.15),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              )
-                            ],
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.deepOrange
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                mood,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.black87,
-                                ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: Colors.white,
-                                )
-                              else
-                                const Icon(
-                                  Icons.circle_outlined,
-                                  color: Colors.grey,
-                                ),
-                            ],
-                          ),
+                    children: [
+                      // Food Type Selection
+                      const Text(
+                        "What type of food do you want today?",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      ...moods.map((mood) {
+                        final isSelected = selectedOption == mood;
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedOption = mood;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 20),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? const LinearGradient(
+                                colors: [Colors.deepOrange, Colors.orange],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                                  : const LinearGradient(
+                                colors: [Colors.white, Colors.white],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isSelected
+                                      ? Colors.deepOrange.withOpacity(0.4)
+                                      : Colors.grey.withOpacity(0.15),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                )
+                              ],
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.deepOrange
+                                    : Colors.grey.shade300,
+                                width: 2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  mood,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.white,
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.circle_outlined,
+                                    color: Colors.grey,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Family Size Selection
+                      const Text(
+                        "How many people will eat?",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "This helps us adjust portion recommendations",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...familySizes.map((size) {
+                        final isSelected = selectedFamilySize == size;
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedFamilySize = size;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 20),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? const LinearGradient(
+                                colors: [Colors.deepOrange, Colors.orange],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                                  : const LinearGradient(
+                                colors: [Colors.white, Colors.white],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isSelected
+                                      ? Colors.deepOrange.withOpacity(0.4)
+                                      : Colors.grey.withOpacity(0.15),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                )
+                              ],
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.deepOrange
+                                    : Colors.grey.shade300,
+                                width: 2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  size,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.white,
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.circle_outlined,
+                                    color: Colors.grey,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ),
                 ),
 
@@ -176,27 +279,28 @@ class _Questions5ScreenState extends State<Questions5Screen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: selectedOption == null
+                      backgroundColor: (selectedOption == null || selectedFamilySize == null)
                           ? Colors.grey
                           : Colors.deepOrange,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: selectedOption == null
+                    onPressed: (selectedOption == null || selectedFamilySize == null)
                         ? null
                         : () {
                       // Get previous answers from route arguments
                       Map<String, String> previousAnswers =
                           ModalRoute.of(context)?.settings.arguments as Map<String, String>? ?? {};
 
-                      // Add current question's answer
+                      // Add current question's answers
                       Map<String, String> completeAnswers = Map.from(previousAnswers);
-                      completeAnswers['mood'] = selectedOption!;
+                      completeAnswers['type'] = selectedOption!; // Fixed: was 'mood'
+                      completeAnswers['familySize'] = selectedFamilySize!; // New: family size
 
                       // Create UserPreferences object
                       UserPreferences userPrefs = UserPreferences(
-                        mood: completeAnswers['mood'] ?? '',
+                        mood: completeAnswers['type'] ?? '', // This maps to food type
                         time: completeAnswers['time'] ?? '',
                         energy: completeAnswers['energy'] ?? '',
                         budget: completeAnswers['budget'] ?? '',
