@@ -145,11 +145,27 @@ class InMemoryRecipeRepository implements RecipeRepository {
 
   int _scoreRecipe(Recipe recipe, UserPreferences prefs) {
     int score = 0;
-    if (recipe.type == prefs.mood) score += 50;
-    if (recipe.time == prefs.time) score += 40;
-    if (recipe.energy == prefs.energy) score += 30;
-    if (recipe.budget == prefs.budget) score += 20;
-    if (recipe.weather == prefs.weather) score += 15;
+    // Prioritize exact matches with higher weights
+    if (recipe.type == prefs.mood) score += 50;        // Most important - food type preference
+    if (recipe.energy == prefs.energy) score += 40;    // Energy level match
+    if (recipe.time == prefs.time) score += 30;        // Time availability
+    if (recipe.budget == prefs.budget) score += 25;    // Budget constraints
+    if (recipe.weather == prefs.weather) score += 20;  // Weather appropriateness
+    
+    // Add partial matches for flexibility
+    // If user has "Very low energy" but recipe needs "Low energy", still give some points
+    if (prefs.energy == "Very low energy" && recipe.energy == "Low energy") score += 20;
+    if (prefs.energy == "Low energy" && recipe.energy == "Very low energy") score += 15;
+    
+    // Budget flexibility - allow one level up/down
+    if (prefs.budget == "Very low budget" && recipe.budget == "Low budget") score += 15;
+    if (prefs.budget == "Low budget" && recipe.budget == "Medium budget") score += 10;
+    if (prefs.budget == "Medium budget" && recipe.budget == "High budget") score += 5;
+    
+    // Weather flexibility - Normal weather can match with any weather
+    if (prefs.weather == "Normal" && recipe.weather != "Normal") score += 10;
+    if (recipe.weather == "Normal" && prefs.weather != "Normal") score += 10;
+    
     return score;
   }
 
