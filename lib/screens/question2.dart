@@ -10,7 +10,7 @@ class Questions2Screen extends StatefulWidget {
 class _Questions2ScreenState extends State<Questions2Screen> {
   String? selectedOption;
 
-  final List<String> moods = ["Low budget", "Medium budget", "High budget", "Very low budget"];
+  final List<String> moods = ["Very low budget (Under Rs.200)", "Low budget (Rs.200-500)", "Medium budget (Rs.500-1000)", "High budget (Rs.1000+)"];
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,7 @@ class _Questions2ScreenState extends State<Questions2Screen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "What is your budget level today?",
+                          "What's your budget for ingredients today?",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _Questions2ScreenState extends State<Questions2Screen> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          "Select one option that best matches your preference",
+                          "This includes all ingredients needed for the recipe",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.black54,

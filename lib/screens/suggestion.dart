@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../main.dart';
 import '../recipe_data.dart';
@@ -128,22 +129,36 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
       'time': '30-35 minutes',
       'budget': 'Medium budget',
       'weather': 'Normal',
-      'mood': 'Chicken'
+      'type': 'Chicken' // Fixed: was 'mood'
     };
 
     final allRecipes = RecipeData.getAllRecipesData();
+    print('Total recipes loaded: ${allRecipes.length}');
 
-    // --- IMPROVED SCORING LOGIC ---
-    // Calculate a score for each recipe based on how many answers it matches.
+    // --- UNIFIED SCORING LOGIC (matching main.dart) ---
     var scoredRecipes = allRecipes.map((recipe) {
       int score = 0;
-
-      // Check each answer and give points for matches
-      if (answers['energy'] != null && recipe.energy == answers['energy']) score += 5;
-      if (answers['time'] != null && recipe.time == answers['time']) score += 4;
-      if (answers['budget'] != null && recipe.budget == answers['budget']) score += 3;
-      if (answers['weather'] != null && recipe.weather == answers['weather']) score += 3;
-      if (answers['mood'] != null && recipe.type == answers['mood']) score += 5;
+      
+      // Prioritize exact matches with higher weights
+      if (answers['type'] != null && recipe.type == answers['type']) score += 50;        // Most important - food type preference
+      if (answers['energy'] != null && recipe.energy == answers['energy']) score += 40;    // Energy level match
+      if (answers['time'] != null && recipe.time == answers['time']) score += 30;        // Time availability
+      if (answers['budget'] != null && recipe.budget == answers['budget']) score += 25;    // Budget constraints
+      if (answers['weather'] != null && recipe.weather == answers['weather']) score += 20;  // Weather appropriateness
+      
+      // Add partial matches for flexibility
+      // If user has "Very low energy" but recipe needs "Low energy", still give some points
+      if (answers['energy'] == "Very low energy" && recipe.energy == "Low energy") score += 20;
+      if (answers['energy'] == "Low energy" && recipe.energy == "Very low energy") score += 15;
+      
+      // Budget flexibility - allow one level up/down
+      if (answers['budget'] == "Very low budget" && recipe.budget == "Low budget") score += 15;
+      if (answers['budget'] == "Low budget" && recipe.budget == "Medium budget") score += 10;
+      if (answers['budget'] == "Medium budget" && recipe.budget == "High budget") score += 5;
+      
+      // Weather flexibility - Normal weather can match with any weather
+      if (answers['weather'] == "Normal" && recipe.weather != "Normal") score += 10;
+      if (recipe.weather == "Normal" && answers['weather'] != "Normal") score += 10;
 
       return {'recipe': recipe, 'score': score};
     }).toList();
@@ -170,6 +185,10 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     // Select a random recipe from the best matches.
     final random = Random();
     final recipe = bestMatches[random.nextInt(bestMatches.length)];
+    
+    print('Selected recipe: ${recipe.name}');
+    print('Recipe image URL: ${recipe.imageUrl}');
+    print('Image URL is empty: ${recipe.imageUrl.isEmpty}');
 
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
@@ -231,6 +250,166 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // TEST IMAGE - Simple network image test
+            Container(
+              width: 100,
+              height: 100,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red, width: 2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Image.network(
+                'https://via.placeholder.com/100x100/FF0000/FFFFFF?text=TEST',
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  print('TEST IMAGE - Loading: https://via.placeholder.com/100x100/FF0000/FFFFFF?text=TEST');
+                  if (loadingProgress == null) {
+                    print('TEST IMAGE - Loaded successfully');
+                    return child;
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print('TEST IMAGE - Failed to load');
+                  print('TEST IMAGE - Error: $error');
+                  return Container(
+                    color: Colors.red,
+                    child: const Center(
+                      child: Text('TEST\nFAILED', 
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            // Recipe Image
+            if (recipe.imageUrl.isNotEmpty)
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    recipe.imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      print('Loading image: ${recipe.imageUrl}');
+                      if (loadingProgress == null) {
+                        print('Image loaded successfully: ${recipe.imageUrl}');
+                        return child;
+                      }
+                      print('Loading progress: ${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes}');
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFD2691E),
+                              Color(0xFFCD853F),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Image failed to load: ${recipe.imageUrl}');
+                      print('Error: $error');
+                      print('StackTrace: $stackTrace');
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFD2691E),
+                              Color(0xFFCD853F),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.restaurant_menu,
+                                size: 60,
+                                color: Colors.white54,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Image failed to load',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFD2691E),
+                      Color(0xFFCD853F),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.restaurant_menu,
+                        size: 60,
+                        color: Colors.white54,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'No image URL',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
             Text(
               recipe.name,
               style: const TextStyle(
@@ -238,6 +417,65 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
+            ),
+            const SizedBox(height: 12),
+            // Recipe Details Row
+            Row(
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.time,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department,
+                      size: 16,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.spiceLevel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.restaurant,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.cuisine,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(

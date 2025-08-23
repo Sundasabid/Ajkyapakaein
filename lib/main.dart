@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'recipe_data.dart';
 
 
@@ -145,12 +146,68 @@ class InMemoryRecipeRepository implements RecipeRepository {
 
   int _scoreRecipe(Recipe recipe, UserPreferences prefs) {
     int score = 0;
-    if (recipe.type == prefs.mood) score += 50;
-    if (recipe.time == prefs.time) score += 40;
-    if (recipe.energy == prefs.energy) score += 30;
-    if (recipe.budget == prefs.budget) score += 20;
-    if (recipe.weather == prefs.weather) score += 15;
+    // Prioritize exact matches with higher weights
+    if (recipe.type == prefs.mood) score += 50;        // Most important - food type preference
+    if (recipe.energy == prefs.energy) score += 40;    // Energy level match
+    if (recipe.time == prefs.time) score += 30;        // Time availability
+    if (recipe.budget == prefs.budget) score += 25;    // Budget constraints
+    if (recipe.weather == prefs.weather) score += 20;  // Weather appropriateness
+    
+    // REALISTIC ENERGY-TIME CONSTRAINTS
+    // Very low energy users should get quick recipes regardless of their time preference
+    if (prefs.energy == "Very low energy") {
+      if (recipe.time == "15-20 minutes") score += 35; // Boost quick recipes
+      else if (recipe.time == "30-35 minutes") score += 15; // Some points for medium
+      else if (recipe.time == "1 hour" || recipe.time == "No worry of time") score -= 20; // Penalty for long recipes
+    }
+    
+    // Low energy users prefer shorter recipes
+    if (prefs.energy == "Low energy") {
+      if (recipe.time == "15-20 minutes") score += 25;
+      else if (recipe.time == "30-35 minutes") score += 15;
+      else if (recipe.time == "1 hour") score -= 5;
+      else if (recipe.time == "No worry of time") score -= 15;
+    }
+    
+    // Add partial matches for flexibility
+    // If user has "Very low energy" but recipe needs "Low energy", still give some points
+    if (prefs.energy == "Very low energy" && recipe.energy == "Low energy") score += 20;
+    if (prefs.energy == "Low energy" && recipe.energy == "Very low energy") score += 15;
+    
+    // Budget flexibility - allow one level up/down
+    String userBudgetLevel = _extractBudgetLevel(prefs.budget);
+    String recipeBudgetLevel = _extractBudgetLevel(recipe.budget);
+    
+    if (userBudgetLevel == "Very low budget" && recipeBudgetLevel == "Low budget") score += 15;
+    if (userBudgetLevel == "Low budget" && recipeBudgetLevel == "Medium budget") score += 10;
+    if (userBudgetLevel == "Medium budget" && recipeBudgetLevel == "High budget") score += 5;
+    
+    // Weather flexibility - Normal weather can match with any weather
+    if (prefs.weather == "Normal" && recipe.weather != "Normal") score += 10;
+    if (recipe.weather == "Normal" && prefs.weather != "Normal") score += 10;
+    
+    // SEASONAL INTELLIGENCE - Boost dishes appropriate for current season
+    // You can enhance this further with actual date checking
+    if (prefs.weather == "Hot") {
+      if (recipe.tags.contains("Summer") || recipe.tags.contains("Cooling") || recipe.tags.contains("Light")) score += 15;
+    }
+    if (prefs.weather == "Cold") {
+      if (recipe.tags.contains("Winter") || recipe.tags.contains("Warm") || recipe.tags.contains("Rich")) score += 15;
+    }
+    if (prefs.weather == "Rainy") {
+      if (recipe.tags.contains("Comfort") || recipe.tags.contains("Fritters") || recipe.tags.contains("Hot")) score += 15;
+    }
+    
     return score;
+  }
+  
+  // Helper function to extract budget level from budget string
+  String _extractBudgetLevel(String budget) {
+    if (budget.contains("Very low budget")) return "Very low budget";
+    if (budget.contains("Low budget")) return "Low budget";
+    if (budget.contains("Medium budget")) return "Medium budget";
+    if (budget.contains("High budget")) return "High budget";
+    return budget; // fallback
   }
 
   @override
@@ -363,40 +420,139 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFFD2691E),
-                                  Color(0xFFCD853F),
-                                ],
-                              ),
+                      child: currentRecipe.imageUrl.isNotEmpty
+                          ? Image.network(
+                              currentRecipe.imageUrl,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                print('Main.dart - Loading image: ${currentRecipe.imageUrl}');
+                                if (loadingProgress == null) {
+                                  print('Main.dart - Image loaded successfully: ${currentRecipe.imageUrl}');
+                                  return child;
+                                }
+                                print('Main.dart - Loading progress: ${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes}');
+                                return Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFD2691E),
+                                        Color(0xFFCD853F),
+                                      ],
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Main.dart - Image failed to load: ${currentRecipe.imageUrl}');
+                                print('Main.dart - Error: $error');
+                                print('Main.dart - StackTrace: $stackTrace');
+                                return Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFFD2691E),
+                                            Color(0xFFCD853F),
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.restaurant_menu,
+                                              size: 80,
+                                              color: Colors.white54,
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Image failed to load',
+                                              style: TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withOpacity(0.3),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            )
+                          : Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFD2691E),
+                                        Color(0xFFCD853F),
+                                      ],
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.restaurant_menu,
+                                          size: 80,
+                                          color: Colors.white54,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'No image URL',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.3),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: const Icon(
-                              Icons.restaurant_menu,
-                              size: 80,
-                              color: Colors.white54,
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.3),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
 
