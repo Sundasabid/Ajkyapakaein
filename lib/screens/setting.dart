@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../model/settings_model.dart';
 
@@ -55,7 +56,6 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 _languageOption(context, 'English', '🇺🇸'),
                 _languageOption(context, 'Urdu', '🇵🇰'),
-                _languageOption(context, 'Arabic', '🇸🇦'),
                 const SizedBox(height: 20),
               ],
             ),
@@ -149,11 +149,26 @@ class SettingsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context); // close dialog
-                // Navigate to auth screen
-                Navigator.pushNamedAndRemoveUntil(
-                    context, '/auth', (r) => false);
+                try {
+                  // Sign out from Firebase
+                  await FirebaseAuth.instance.signOut();
+                  // Navigate to auth screen and clear the navigation stack
+                  Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/auth',
+                          (route) => false
+                  );
+                } catch (e) {
+                  // Handle error if signOut fails
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Logout failed. Please try again.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               child: const Text('Logout'),
             ),

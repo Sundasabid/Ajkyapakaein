@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../model/user_profile.dart';
 import 'dart:io';
 
@@ -27,6 +28,12 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+
+    // Initialize user profile with Firebase Auth data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProfile = Provider.of<UserProfile>(context, listen: false);
+      userProfile.initializeFromFirebaseAuth();
+    });
   }
 
   @override
@@ -53,10 +60,10 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-        image: DecorationImage(
-        image: AssetImage("assets/background.jpg"),
-    fit: BoxFit.cover,
-    ),),
+          image: DecorationImage(
+            image: AssetImage("assets/background.jpg"),
+            fit: BoxFit.cover,
+          ),),
         child: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -562,9 +569,26 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/authscreen');
+                try {
+                  // Sign out from Firebase
+                  await FirebaseAuth.instance.signOut();
+                  // Navigate to auth screen and clear the navigation stack
+                  Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/authscreen',
+                          (route) => false
+                  );
+                } catch (e) {
+                  // Handle error if signOut fails
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Logout failed. Please try again.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,

@@ -37,4 +37,6 @@ class UserProfile with ChangeNotifier {
     if (email != null) _email = email;
     notifyListeners();
   }
+
+  void initializeFromFirebaseAuth() {}
 }

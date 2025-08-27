@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../main.dart';
 import '../recipe_data.dart';
@@ -132,6 +133,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     };
 
     final allRecipes = RecipeData.getAllRecipesData();
+    print('Total recipes loaded: ${allRecipes.length}');
 
     // --- IMPROVED SCORING LOGIC ---
     // Calculate a score for each recipe based on how many answers it matches.
@@ -170,6 +172,10 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     // Select a random recipe from the best matches.
     final random = Random();
     final recipe = bestMatches[random.nextInt(bestMatches.length)];
+
+    print('Selected recipe: ${recipe.name}');
+    print('Recipe image URL: ${recipe.imageUrl}');
+    print('Image URL is empty: ${recipe.imageUrl.isEmpty}');
 
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
@@ -231,6 +237,68 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Recipe Image
+            if (recipe.imageUrl.isNotEmpty)
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                    imageUrl: recipe.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFD2691E),
+                            Color(0xFFCD853F),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFD2691E),
+                            Color(0xFFCD853F),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.restaurant_menu,
+                          size: 60,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
             Text(
               recipe.name,
               style: const TextStyle(
@@ -238,6 +306,65 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
+            ),
+            const SizedBox(height: 12),
+            // Recipe Details Row
+            Row(
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.time,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department,
+                      size: 16,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.spiceLevel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.restaurant,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      recipe.cuisine,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(

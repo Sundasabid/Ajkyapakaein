@@ -159,6 +159,78 @@ class _AuthGateState extends State<AuthGate> {
     }
   }
 
+  // Forgot Password functionality
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      _showCustomDialog(
+          "Email Required",
+          "Please enter your email address to reset your password.",
+          isError: true
+      );
+      return;
+    }
+
+    // Validate email format
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showCustomDialog(
+          "Invalid Email",
+          "Please enter a valid email address.",
+          isError: true
+      );
+      return;
+    }
+
+    try {
+      setState(() => isLoading = true);
+
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      setState(() => isLoading = false);
+
+      _showCustomDialog(
+          "Password Reset Email Sent",
+          "A password reset link has been sent to $email. Please check your email and follow the instructions to reset your password.",
+          isError: false,
+          onClose: () {
+            // Navigate back to login screen after success
+            setState(() {
+              isLogin = true;
+              _emailController.clear();
+              _passwordController.clear();
+            });
+          }
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() => isLoading = false);
+
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No account found with this email address. Please check your email or create a new account.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'The email address is not valid.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Too many requests. Please try again later.';
+          break;
+        default:
+          errorMessage = 'Failed to send password reset email. Please try again.';
+      }
+
+      _showCustomDialog("Password Reset Failed", errorMessage, isError: true);
+    } catch (e) {
+      setState(() => isLoading = false);
+      _showCustomDialog(
+          "Error",
+          "Something went wrong. Please check your internet connection and try again.",
+          isError: true
+      );
+    }
+  }
+
   // Custom themed dialog
   void _showCustomDialog(String title, String message, {required bool isError, VoidCallback? onClose}) {
     showDialog(
@@ -533,13 +605,7 @@ class _AuthGateState extends State<AuthGate> {
                                   const Text("Remember me"),
                                   const Spacer(),
                                   TextButton(
-                                    onPressed: () {
-                                      _showCustomDialog(
-                                          "Coming Soon!",
-                                          "Forgot password feature will be available soon. For now, please try to remember your password or create a new account.",
-                                          isError: false
-                                      );
-                                    },
+                                    onPressed: isLoading ? null : _forgotPassword,
                                     child: const Text(
                                       "Forgot password?",
                                       style: TextStyle(color: Colors.red),
