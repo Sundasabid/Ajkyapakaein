@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProfile with ChangeNotifier {
   String _name = 'Unknown User';
-  String _email = 'unknownuser@example.com';
+  String _email = 'Unknown Email';
 
   int _mealsCount = 0;
   String? _profileImagePath;
@@ -38,5 +39,12 @@ class UserProfile with ChangeNotifier {
     notifyListeners();
   }
 
-  void initializeFromFirebaseAuth() {}
+  void initializeFromFirebaseAuth() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _name = user.displayName ?? 'Unknown User';
+      _email = user.email ?? 'Unknown Email';
+      notifyListeners();
+    }
+  }
 }
