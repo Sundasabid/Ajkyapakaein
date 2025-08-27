@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../model/user_profile.dart';
 
 import 'home.dart';
 
@@ -34,6 +36,10 @@ class _AuthGateState extends State<AuthGate> {
     if (shouldRemember && FirebaseAuth.instance.currentUser != null) {
       // Check if user is verified before auto-login
       if (FirebaseAuth.instance.currentUser!.emailVerified) {
+        // Load user profile data from Firebase for auto-login
+        if (mounted) {
+          context.read<UserProfile>().loadUserFromFirebase();
+        }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -71,6 +77,11 @@ class _AuthGateState extends State<AuthGate> {
         // Save remember me preference
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('remember_me', rememberMe);
+
+        // Load user profile data from Firebase
+        if (mounted) {
+          context.read<UserProfile>().loadUserFromFirebase();
+        }
 
         Navigator.pushReplacement(
           context,
@@ -110,6 +121,7 @@ class _AuthGateState extends State<AuthGate> {
 
       // Update display name
       await userCredential.user!.updateDisplayName(_nameController.text.trim());
+      await userCredential.user!.reload();
 
       // Send verification email
       await userCredential.user!.sendEmailVerification();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../model/user_profile.dart';
 import 'dart:io';
 
@@ -27,6 +28,11 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    
+    // Load user data from Firebase when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProfile>().loadUserFromFirebase();
+    });
   }
 
   @override
@@ -562,9 +568,22 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/authscreen');
+                try {
+                  // Sign out from Firebase
+                  await FirebaseAuth.instance.signOut();
+                  // Navigate to auth screen, replacing the entire navigation stack
+                  Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+                } catch (e) {
+                  // Show error if logout fails
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Logout failed: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -667,28 +686,37 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                context.read<UserProfile>().updateProfile(
-                  name: _nameController.text.trim(),
-                  email: _emailController.text.trim(),
-                );
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text('Profile updated successfully!'),
-                      ],
+              onPressed: () async {
+                try {
+                  await context.read<UserProfile>().updateFirebaseProfile(
+                    name: _nameController.text.trim(),
+                    email: _emailController.text.trim(),
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Profile updated successfully!'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      behavior: SnackBarBehavior.floating,
                     ),
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating profile: ${e.toString()}'),
+                      backgroundColor: Colors.red,
                     ),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFFE74C3C),
