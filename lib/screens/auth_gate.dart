@@ -68,6 +68,9 @@ class _AuthGateState extends State<AuthGate> {
         );
         await FirebaseAuth.instance.signOut();
       } else {
+        // Reload user to ensure all data is fresh
+        await userCredential.user!.reload();
+        
         // Save remember me preference
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('remember_me', rememberMe);
@@ -110,6 +113,9 @@ class _AuthGateState extends State<AuthGate> {
 
       // Update display name
       await userCredential.user!.updateDisplayName(_nameController.text.trim());
+      
+      // Reload user to ensure display name is updated
+      await userCredential.user!.reload();
 
       // Send verification email
       await userCredential.user!.sendEmailVerification();

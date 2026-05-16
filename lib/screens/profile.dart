@@ -37,6 +37,14 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh user data when dependencies change (e.g., when screen is focused)
+    final userProfile = Provider.of<UserProfile>(context, listen: false);
+    userProfile.initializeFromFirebaseAuth();
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
@@ -574,18 +582,26 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 try {
                   // Sign out from Firebase
                   await FirebaseAuth.instance.signOut();
+                  
+                  // Verify that the user is actually signed out
+                  if (FirebaseAuth.instance.currentUser != null) {
+                    throw Exception('User still signed in after signOut');
+                  }
+                  
                   // Navigate to auth screen and clear the navigation stack
                   Navigator.pushNamedAndRemoveUntil(
                       context,
-                      '/authscreen',
+                      '/auth',
                           (route) => false
                   );
                 } catch (e) {
                   // Handle error if signOut fails
+                  print('Logout error: $e'); // Debug logging
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Logout failed. Please try again.'),
+                      content: Text('Logout failed: ${e.toString()}'),
                       backgroundColor: Colors.red,
+                      duration: Duration(seconds: 3),
                     ),
                   );
                 }
